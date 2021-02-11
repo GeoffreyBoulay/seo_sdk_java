@@ -77,14 +77,16 @@ public class BVUIContentServiceProvider
 
   public StringBuilder call() throws Exception {
     StringBuilder uiContent = new StringBuilder();
+    URI seoContentUrl = bvSeoSdkUrl.seoContentUri();
+    String correctedBaseUri = bvSeoSdkUrl.correctedBaseUri();
     try {
       // Includes integration script if one is enabled.
       includeIntegrationCode(uiContent);
-      URI seoContentUrl = bvSeoSdkUrl.seoContentUri();
-      String correctedBaseUri = bvSeoSdkUrl.correctedBaseUri();
+
       getBvContent(uiContent, seoContentUrl, correctedBaseUri);
 
     } catch (BVSdkException e) {
+      LOGGER.info("Could not get BV content {} {}", seoContentUrl, correctedBaseUri, e);
       message.append(e.getMessage());
     }
 
@@ -228,9 +230,9 @@ public class BVUIContentServiceProvider
       // Error stream needs to be read fully to keep the connection persistent on exceptions
       handleErrorStream(httpUrlConnection);
       if (e instanceof SocketTimeoutException) {
-        throw new BVSdkException(e.getMessage());
+        throw new BVSdkException(e.getMessage(), e);
       } else {
-        throw new BVSdkException("ERR0012");
+        throw new BVSdkException("ERR0012", e);
       }
     } catch (BVSdkException bve) {
       throw bve;
@@ -277,7 +279,7 @@ public class BVUIContentServiceProvider
         bvConfiguration.getProperty(BVClientConfig.CHARSET.getPropertyName())
       );
     } catch (IOException e) {
-      throw new BVSdkException("ERR0012");
+      throw new BVSdkException("ERR0012", e);
     }
 
     return content;
